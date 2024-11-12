@@ -6,12 +6,24 @@ use std::fs;
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
-        let file = fs::read_to_string(args[1].to_string()).unwrap_or("".to_string());
-        let new_file = process_file(file);
-        fs::write(args[1].to_string(), new_file).expect("Unable to write file.\n");
+        if args[1] == "-s" || args[1] == "--string" {
+            if args.len() > 2 {
+                let file = args[2].clone();
+                let new_file = process_file(file);
+                println!("\n{}\n", new_file);
+            }
+            else {
+                print_help();
+            }
+        }
+        else {
+            let file = fs::read_to_string(args[1].to_string()).unwrap_or("".to_string());
+            let new_file = process_file(file);
+            fs::write(args[1].to_string(), new_file).expect("Unable to write file.\n");
+        }
     }
     else {
-        println!("Usage: sqlup <filepath>");
+        print_help();
     }
 }
 
@@ -65,4 +77,8 @@ fn get_keywords() -> HashSet<String> {
         "unique", "update", "values", "view", "where",
     ].into_iter().map(|x| x.to_string()).collect::<HashSet<String>>());
     return keywords;
+}
+
+fn print_help() {
+    println!("Usage:\nsqlup <filepath>\nsqlup -s <string>\nsqlup --string <string>");
 }
