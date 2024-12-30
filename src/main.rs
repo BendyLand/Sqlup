@@ -27,41 +27,46 @@ fn main() {
     }
 }
 
+fn replace_keywords(part: &str, keywords: &HashSet<String>) -> String {
+    let mut processed = part.to_string();
+    println!("{}", &part);
+    for kw in keywords {
+        let word = format!(r"\b{}\b", regex::escape(kw));
+        let pattern = Regex::new(&word).unwrap();
+        processed = pattern
+            .replace_all(&processed, |_: &regex::Captures| kw.to_uppercase())
+            .to_string();
+    }
+    return processed;
+}
+
 fn process_file(file: String) -> String {
     let lines = file.lines();
     let keywords = get_keywords();
     let mut new_lines = Vec::<String>::new();
     for line in lines {
-        let mut new_line = line.to_string();
-        for kw in keywords.clone() {
-            let word = format!(r"\b{}\b", kw);
-            let pattern = Regex::new(&word).unwrap();
-            if pattern.is_match(&new_line) {
-                new_line = capitalize_keyword(new_line.to_string(), kw);
+        // Regex to match text outside quotes
+        let re = Regex::new(r#"(?:"[^"]*"|'[^']*')|[^"' ]+"#).unwrap();
+        let mut updated_line = String::new();
+        let mut last_match_end = 0;
+        for mat in re.find_iter(&line) {
+            let part = mat.as_str();
+            updated_line.push_str(&line[last_match_end..mat.start()]); // Add unmatched text
+            if !part.starts_with('"') && !part.starts_with('\'') {
+                // Process non-quoted parts to replace keywords
+                let processed = replace_keywords(part, &keywords);
+                updated_line.push_str(&processed);
+            } 
+            else {
+                // Keep quoted parts unchanged
+                updated_line.push_str(part);
             }
+            last_match_end = mat.end();
         }
-        new_lines.push(new_line);
+        updated_line.push_str(&line[last_match_end..]); // Add any remaining unmatched text
+        new_lines.push(updated_line);
     }
-    let result = new_lines.join("\n");
-    return result;
-}
-
-fn capitalize_keyword(line: String, keyword: String) -> String {
-    let start = line.find(&keyword).unwrap();
-    let mut chars: Vec<char> = line.chars().collect();
-    for i in start..start+keyword.len() {
-        chars[i] = {
-            line
-                .chars()
-                .nth(i)
-                .unwrap()
-                .to_uppercase()
-                .nth(0)
-                .unwrap()
-        };
-    }
-    let result = chars.into_iter().collect::<String>();
-    return result;
+    return new_lines.join("\n");
 }
 
 fn get_keywords() -> HashSet<String> {
