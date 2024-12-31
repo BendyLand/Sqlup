@@ -29,7 +29,6 @@ fn main() {
 
 fn replace_keywords(part: &str, keywords: &HashSet<String>) -> String {
     let mut processed = part.to_string();
-    println!("{}", &part);
     for kw in keywords {
         let word = format!(r"\b{}\b", regex::escape(kw));
         let pattern = Regex::new(&word).unwrap();
