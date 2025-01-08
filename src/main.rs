@@ -70,15 +70,16 @@ fn process_file(file: String) -> String {
 
 fn get_keywords() -> HashSet<String> {
     let keywords = HashSet::from([
-        "add", "all", "alter", "and", "any", "as", "asc", "backup", "begin",
-        "between", "by", "case", "check", "column", "constraint", "create",
-        "database", "declare", "default", "delete", "desc", "distinct", "drop",
-        "end", "exec", "exists", "foreign", "from", "full", "group", "having",
-        "in", "index", "inner", "insert", "insert", "into", "is", "join",
-        "key", "left", "like", "limit", "not", "null", "on", "or", "order",
-        "outer", "primary", "procedure", "references", "replace", "right",
-        "rownum", "select", "set", "table", "top", "truncate", "union",
-        "unique", "update", "values", "view", "where",
+        "add", "after", "all", "alter", "and", "any", "as", "asc", "backup",
+        "begin", "before", "between", "by", "case", "check", "column",
+        "constraint", "create", "database", "declare", "default", "delete",
+        "desc", "distinct", "drop", "each", "end", "exec", "execute",
+        "exists", "foreign", "for", "from", "full", "group", "having", "in",
+        "index", "inner", "insert", "insert", "into", "is", "join", "key",
+        "left", "like", "limit", "not", "null", "on", "or", "order", "outer",
+        "primary", "procedure", "references", "replace", "right", "row",
+        "rownum", "select", "set", "table", "top", "trigger", "truncate",
+        "union", "unique", "update", "values", "view", "where", "when"
     ].into_iter().map(|x| x.to_string()).collect::<HashSet<String>>());
     return keywords;
 }
