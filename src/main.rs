@@ -1,20 +1,37 @@
+use copypasta::{ClipboardContext, ClipboardProvider};
 use regex::Regex;
 use std::collections::HashSet;
 use std::env;
 use std::fs;
+use std::fs::read_to_string;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() > 1 {
-        if args[1] == "-s" || args[1] == "--string" {
-            if args.len() > 2 {
-                let file = args[2].clone();
+    let args = args[1..].to_vec();
+    let flags = check_arg_flags(&args);
+    let file_name = find_file_name(&args);
+    let file = {
+        if file_name.len() > 0 { read_to_string(file_name.clone()).unwrap_or("".to_string()) } 
+        else { find_string_arg(&args) }
+    };
+    if flags.len() > 0 {
+        if flags.contains(&Arg::STRING) {
+            if flags.contains(&Arg::COPY) {
+                let new_file = process_file(file);
+                copy_to_clipboard(new_file);
+            }
+            else if file.len() > 0 {
                 let new_file = process_file(file);
                 println!("\n{}\n", new_file);
             }
-            else {
-                print_help();
+            else { print_help(); }
+        }
+        else if flags.contains(&Arg::COPY) {
+            if file.len() > 0 {
+                let new_file = process_file(file);
+                copy_to_clipboard(new_file);
             }
+            else { print_help(); }
         }
         else {
             let file = fs::read_to_string(args[1].to_string()).unwrap_or("".to_string());
@@ -22,8 +39,14 @@ fn main() {
             fs::write(args[1].to_string(), new_file).expect("Unable to write file.\n");
         }
     }
-    else {
-        print_help();
+    else { 
+        if file.len() > 0 {
+            let new_file = process_file(file);
+            fs::write(file_name, new_file).expect("Unable to write file.\n");
+        }
+        else {
+            print_help(); 
+        }
     }
 }
 
@@ -55,7 +78,7 @@ fn process_file(file: String) -> String {
                 // Process non-quoted parts to replace keywords
                 let processed = replace_keywords(part, &keywords);
                 updated_line.push_str(&processed);
-            } 
+            }
             else {
                 // Keep quoted parts unchanged
                 updated_line.push_str(part);
@@ -85,5 +108,91 @@ fn get_keywords() -> HashSet<String> {
 }
 
 fn print_help() {
-    println!("Usage:\nsqlup <filepath>\nsqlup -s <string>\nsqlup --string <string>");
+println!(
+"
+Usage:
+
+sqlup     <filepath>
+sqlup -c  <filepath> or sqlup --copy   <filepath>      (to copy results to clipboard)
+sqlup -s  <string>   or sqlup --string <string>        (to provide a string instead of a filename)
+
+Flags may also be combined:
+sqlup -sc <string>   or sqlup --copy --string <string> (to copy a provided string)
+"
+);
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+enum Arg {
+    STRING,
+    COPY,
+}
+
+fn check_arg_flags(args: &Vec<String>) -> Vec<Arg> {
+    let mut result = Vec::<Arg>::new();
+    let pattern = Regex::new(r"-[sc]*[sc]").unwrap();
+    for arg in args {
+        if pattern.is_match(&arg) {
+            if arg.contains("s") { result.push(Arg::STRING); }
+            if arg.contains("c") { result.push(Arg::COPY); }
+        }
+        else if arg.contains("--") {
+            if arg.contains("string") { result.push(Arg::STRING); }
+            if arg.contains("copy") { result.push(Arg::COPY); }
+        }
+    }
+    return result;
+}
+
+fn copy_to_clipboard(text: String) {
+    if !text.is_empty() {
+        let mut ctx = ClipboardContext::new().expect("Failed to initialize system clipboard.");
+        ctx.set_contents(text).expect("Unable to set clipboard contents");
+        println!("Result copied to clipboard!");
+    }
+    else { print_help(); }
+}
+
+fn find_file_name(args: &Vec<String>) -> String {
+    let mut result = String::new();
+    let pattern = Regex::new(r"\.d.l").unwrap();
+    for arg in args {
+        let matched = {
+            arg.contains("ql") ||
+            arg.contains("db") ||
+            pattern.is_match(arg)
+        };
+        if matched {
+            result = arg.clone();
+            break;
+        }
+    }
+    return result;
+}
+
+fn find_string_arg(args: &Vec<String>) -> String {
+    let mut result = String::new();
+    for arg in args {
+        if arg.contains(";") {
+            result = arg.clone();
+            break;
+        }
+    }
+    if result.is_empty() {
+        let keywords = get_keywords();
+        for arg in args {
+            if contains_any(&arg, &keywords) {
+                result = arg.clone();
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+fn contains_any(target: &String, checks: &HashSet<String>) -> bool {
+    for check in checks {
+        if target.contains(check) { return true; }
+    }
+    return false;
 }
