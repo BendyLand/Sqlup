@@ -5,7 +5,15 @@ A basic capitalization tool for SQL syntax!
 ## Usage
 
 ```bash
-sqlup <filepath>
+sqlup <filepath>        # normal usage
+sqlup -c     <filepath> # to copy results to clipboard 
+sqlup --copy <filepath> 
+sqlup -s       <string> # to provide a string instead of a filename 
+sqlup --string <string> 
+
+# Flags may also be combined:
+sqlup -sc             <string> # to copy a provided string 
+sqlup --copy --string <string> 
 ```
 
 The program will replace any SQL keywords that are fully lowercase.
