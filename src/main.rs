@@ -66,9 +66,9 @@ fn process_file(file: String) -> String {
     let lines = file.lines();
     let keywords = get_keywords();
     let mut new_lines = Vec::<String>::new();
+    let re = Regex::new(r#"(?:"[^"]*"|'[^']*')|[^"' ]+"#).unwrap();
     for line in lines {
         // Regex to match text outside quotes
-        let re = Regex::new(r#"(?:"[^"]*"|'[^']*')|[^"' ]+"#).unwrap();
         let mut updated_line = String::new();
         let mut last_match_end = 0;
         for mat in re.find_iter(&line) {
