@@ -1,4 +1,4 @@
-# Sqlup
+# SQLup
 
 A basic capitalization tool for SQL syntax!
 
